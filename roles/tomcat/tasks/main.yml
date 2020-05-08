@@ -1,0 +1,47 @@
+---
+# Tomcat
+- name : groupadd tomcat
+  group :
+    name  : tomcat
+    state : present
+
+- name : useradd -s /sbin/nologin tomcat
+  user :
+    name  : tomcat
+    group : tomcat
+    shell : /sbin/nologin
+    create_home : no
+  become: yes
+
+- name : DownLoad Tomcat 9.0.34
+  get_url :
+    url      : http://ftp.kddilabs.jp/infosystems/apache/tomcat/tomcat-9/v9.0.34/bin/apache-tomcat-9.0.34.tar.gz
+    checksum : "sha512:9cb32f8807c0e8d2457d52ac032bb496ae7921e1ea0a0c8e6082bf8da60bb57c317a3f2376589962123dd803fdd2816ff960339cb851d9859b2241165fbc278e"
+    dest     : /tmp # the directory in REMOTE system
+    force    : no   # if 'no', the file will only be downloaded if the destination does not exist
+    validate_certs : no
+
+- name : Extract REMOTE tomcat tar.gz into /tmp (`tar -xzf apache-tomcat-9.0.34.tar.gz -C /tmp`)
+  unarchive :
+    src        : /tmp/apache-tomcat-9.0.34.tar.gz
+    dest       : /tmp
+    remote_src : yes # yes : srcが"リモートのsrc"という意味になる
+
+- name : cp -rp /tmp/apache-tomcat-9.0.34 /opt
+  synchronize :
+    src  : /tmp/apache-tomcat-9.0.34
+    dest : /opt
+  delegate_to : "{{inventory_hostname}}" # delegate_toを指定することでREMOTE間のフォルダコピー = REMOTEでのcp -rpとなる
+
+- name : chown -R tomcat:tomcat /opt/apache-tomcat-9.0.34
+  file :
+    path    : /opt/apache-tomcat-9.0.34
+    owner   : tomcat
+    group   : tomcat
+    state   : directory
+    recurse : yes
+
+- name : rm -rf /tmp/apache-tomcat-9.0.34
+  file :
+    path  : /tmp/apache-tomcat-9.0.34 # Directory
+    state : absent

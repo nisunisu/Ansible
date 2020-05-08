@@ -1,5 +1,17 @@
 ---
+- hosts: all
+  become: yes
+  roles:
+  - common
+
 - hosts: ap_servers
   become: yes
   roles:
-  - ap
+  - tomcat
+  - openJDK # tomcatユーザが必要なのでtomcatのあと
+
+- hosts  : jenkins_servers
+  become : yes
+  roles :
+  - openJDK
+  - jenkins # javaが必要なのでopenJDKのあと

@@ -1,0 +1,65 @@
+---
+# openJDK
+- name : groupadd tomcat
+  group :
+    name  : tomcat
+    state : present
+
+- name : useradd -s /sbin/nologin tomcat
+  user :
+    name  : tomcat
+    group : tomcat
+    shell : /sbin/nologin
+    create_home : no
+  become: yes
+
+- name : DownLoad openJDK "{{openJDK_dist.version}}"
+  get_url :
+    url      : "{{ openJDK_dist.url }}"
+    checksum : "sha256:{{ openJDK_dist.checksum }}"
+    dest     : /tmp # the directory in REMOTE system
+    force    : no   # if 'no', the file will only be downloaded if the destination does not exist
+    validate_certs : no
+
+- name : Extract REMOTE openJDK tar.gz into /tmp (`tar -xzf openjdk-14.0.1_linux-x64_bin.tar.gz -C /tmp`)
+  unarchive :
+    src        : /tmp/openjdk-14.0.1_linux-x64_bin.tar.gz
+    dest       : /tmp
+    remote_src : yes # yes : srcが"リモートのsrc"という意味になる
+
+- name : cp -rp /tmp/jdk-14.0.1 /opt
+  synchronize :
+    src  : /tmp/jdk-14.0.1
+    dest : "{{ java_install_dir }}"
+  delegate_to : "{{inventory_hostname}}" # delegate_toを指定することでREMOTE間のフォルダコピー = REMOTEでのcp -rpとなる
+
+- name : chmod tomcat:tomcat /opt/jdk-14.0.1
+  file :
+    path    : "{{ java_home }}"
+    owner   : tomcat
+    group   : tomcat
+    state   : directory
+    recurse : yes
+
+- name : rm -rf /tmp/jdk-14.0.1
+  file :
+    path  : /tmp/jdk-14.0.1 # Directory
+    state : absent
+
+- name : Set PATH with `scp ../files/jdk14.sh ${inventory_hostname}:/etc/profile.d/ ; chown ; chmod`
+  copy :
+    remote_src : no
+    src        : ../files/jdk14.sh
+    dest       : /etc/profile.d/jdk14.sh
+    owner      : root
+    group      : root
+    mode       : '0644'
+
+- name: Make alternatives.
+  alternatives:
+    name: "{{ item }}"
+    link: "/usr/bin/{{ item }}"
+    path: "{{ java_home }}/bin/{{ item }}"
+  with_items:
+    - java
+    - javac

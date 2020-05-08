@@ -1,0 +1,19 @@
+- name : wget -O /etc/yum.repos.d/jenkins.repo https://pkg.jenkins.io/redhat-stable/jenkins.repo
+  yum_repository :
+    description : "jenkins YUM repo"
+    baseurl     : "https://pkg.jenkins.io/redhat-stable/"
+    name        : jenkins
+
+- name : rpm --import jenkins.io.key
+  rpm_key :
+    key : "https://pkg.jenkins.io/redhat-stable/jenkins.io.key"
+
+- name : yum install jenkins
+  yum :
+    name : jenkins
+
+- name : systemctl jenkins start
+  systemd :
+    name    : jenkins
+    state   : started
+    enabled : yes
