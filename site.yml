@@ -7,8 +7,8 @@
 - hosts: ap_servers
   become: yes
   roles:
+  - openJDK
   - tomcat
-  - openJDK # tomcatユーザが必要なのでtomcatのあと
 
 - hosts  : jenkins_servers
   become : yes
