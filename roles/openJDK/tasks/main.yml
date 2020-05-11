@@ -21,19 +21,19 @@
     force    : no   # if 'no', the file will only be downloaded if the destination does not exist
     validate_certs : no
 
-- name : Extract REMOTE openJDK tar.gz into /tmp (`tar -xzf openjdk-14.0.1_linux-x64_bin.tar.gz -C /tmp`)
+- name : "tar -xzf /tmp/{{ openJDK_dist.filename }} -C /tmp"
   unarchive :
-    src        : /tmp/openjdk-14.0.1_linux-x64_bin.tar.gz
+    src        : "/tmp/{{ openJDK_dist.filename }}"
     dest       : /tmp
     remote_src : yes # yes : srcが"リモートのsrc"という意味になる
 
-- name : cp -rp /tmp/jdk-14.0.1 /opt
+- name : "cp -rp /tmp/jdk-{{ openJDK_dist.version }} /opt"
   synchronize :
-    src  : /tmp/jdk-14.0.1
+    src  : "/tmp/jdk-{{ openJDK_dist.version }}"
     dest : "{{ java_install_dir }}"
   delegate_to : "{{inventory_hostname}}" # delegate_toを指定することでREMOTE間のフォルダコピー = REMOTEでのcp -rpとなる
 
-- name : chmod tomcat:tomcat /opt/jdk-14.0.1
+- name : chmod tomcat:tomcat "{{ java_home }}"
   file :
     path    : "{{ java_home }}"
     owner   : tomcat
@@ -41,9 +41,9 @@
     state   : directory
     recurse : yes
 
-- name : rm -rf /tmp/jdk-14.0.1
+- name : "rm -rf /tmp/jdk-{{ openJDK_dist.version }}"
   file :
-    path  : /tmp/jdk-14.0.1 # Directory
+    path  : "/tmp/jdk-{{ openJDK_dist.version }}" # Directory
     state : absent
 
 - name : Set PATH with `scp ../files/jdk14.sh ${inventory_hostname}:/etc/profile.d/ ; chown ; chmod`
